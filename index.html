@@ -850,11 +850,19 @@
             currentIndex2++;
             slider.style.transform = `translateX(-${currentIndex2 * 100}%)`;
         }
+        else{
+            currentIndex2=0;
+            slider.style.transform = `translateX(-${currentIndex2 * 100}%)`;
+        }
         });
 
         prev.addEventListener('click', () => {
         if (currentIndex2 > 0) {
             currentIndex2--;
+            slider.style.transform = `translateX(-${currentIndex2 * 100}%)`;
+        }
+        else{
+            currentIndex2=slider.children.length/slideCount - 1;
             slider.style.transform = `translateX(-${currentIndex2 * 100}%)`;
         }
         });
