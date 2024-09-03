@@ -315,7 +315,8 @@
         </div>
         
         <!--Feedbacks-->
-        <div class="relative w-[1000px] mx-auto">
+        <!--Desktop view-->
+        <div class="hidden md:block relative w-[1000px] mx-auto">
             <!-- Gallery Wrapper -->
             <div class="overflow-hidden relative">
               <div class="flex transition-transform duration-500 ease-in-out" id="slider">
@@ -350,8 +351,43 @@
             <button id="next" class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-3 rounded-full focus:outline-none">
               &#10095;
             </button>
-          </div>
-        
+        </div>
+        <!--Phone View-->
+        <div class="md:hidden relative w-[400px] mx-auto">
+            <!-- Gallery Wrapper -->
+            <div class="overflow-hidden relative">
+              <div class="flex transition-transform duration-500 ease-in-out" id="sliderFeedback">
+                <!-- Gallery Items -->
+                <div class="flex-shrink-0 w-full">
+                  <img src="assests\img\34 (1).png" alt="Image 1" class="w-full h-auto">
+                </div>
+                <div class="flex-shrink-0 w-full">
+                  <img src="assests\img\35 (1).png" alt="Image 2" class="w-full h-auto">
+                </div>
+                <div class="flex-shrink-0 w-full">
+                  <img src="assests\img\36 (1).png" alt="Image 3" class="w-full h-auto">
+                </div>
+                <div class="flex-shrink-0 w-full">
+                  <img src="assests\img\37 (1).png" alt="Image 3" class="w-full h-auto">
+                </div>
+                <div class="flex-shrink-0 w-full">
+                  <img src="assests\img\38 (1).png" alt="Image 3" class="w-full h-auto">
+                </div>
+                <div class="flex-shrink-0 w-full">
+                  <img src="assests\img\39.png" alt="Image 3" class="w-full h-auto">
+                </div>
+                <!-- Add more images here -->
+              </div>
+            </div>
+            <img src="assests\img\review.png" class="absolute top-[20px] left-[10%] h-[80px] w-auto">
+            <!-- Navigation Buttons -->
+            <button id="prevFeedback" class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-3 rounded-full focus:outline-none">
+              &#10094;
+            </button>
+            <button id="nextFeedback" class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-3 rounded-full focus:outline-none">
+              &#10095;
+            </button>
+        </div>
     </main>
 
     <!--mobile view-->
@@ -823,6 +859,24 @@
         }
         });
             
+    </script>
+    <script>
+        const sliderFeedback = document.getElementById('sliderFeedback');
+  const nextFeedback = document.getElementById('nextFeedback');
+  const prevFeedback = document.getElementById('prevFeedback');
+
+  let currentIndexFeedback = 0;
+
+  nextFeedback.addEventListener('click', () => {
+    currentIndexFeedback = (currentIndexFeedback + 1) % sliderFeedback.children.length;
+    sliderFeedback.style.transform = `translateX(-${currentIndexFeedback * 100}%)`;
+  });
+
+  prevFeedback.addEventListener('click', () => {
+    currentIndexFeedback = (currentIndexFeedback - 1 + sliderFeedback.children.length) % sliderFeedback.children.length;
+    sliderFeedback.style.transform = `translateX(-${currentIndexFeedback * 100}%)`;
+  });
+
     </script>
 
 </html>
