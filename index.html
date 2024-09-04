@@ -31,10 +31,37 @@
         .slider-card {
             scroll-snap-align: start;
         }
-        
+    </style>
+    
+    <style>
+        body {
+            font-family: 'Glacial Indifference', sans-serif;
+            touch-action: pan-y;
+        }
+      
+        .card-stack {
+            perspective: 1000px;
+        }
+        .card {
+            transition: all 0.3s ease;
+            position: absolute;
+            width: 100%;
+            backface-visibility: hidden;
+        }
+        .image-left {
+            margin-left: -70px; /* Adjust this value as needed */
+        }
+        .slider-container {
+            scroll-snap-type: x mandatory;
+        }
+        .slider-card {
+            scroll-snap-align: start;
+        }
 
-       
-        
+        .bg-selected {
+            background-color: #009846 !important;
+            color: white !important;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -42,8 +69,9 @@
                 extend: {
                     colors: {
                         button: '#374f59',
-                        text:' #8e99a2',
-                        wwp:'#484b4e'
+                        text: '#8e99a2',
+                        wwp: '#484b4e',
+                        checked: '#009846',
                     },
                 },
             },
@@ -272,19 +300,25 @@
         
 
 
-        <div id="popup" class="fixed inset-0 bg-[#009846] bg-opacity-70 md:bg-black md:bg-opacity-70 flex items-center justify-center hidden ">
-            <div class="bg-white rounded-lg p-8 max-w-md w-50 md:w-[800px] shadow-2xl md:shadow-none ">
+        <div id="popup" class="fixed inset-0 bg-[#009846] bg-opacity-70 md:bg-black md:bg-opacity-70 flex items-center justify-center hidden">
+            <div class="bg-white rounded-lg p-8 max-w-md w-50 md:w-[800px] shadow-2xl md:shadow-none">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-[25px] text-center font-bold">TELL US ABOUT YOURSELF!</h2>
                     <button id="closeButton" class="text-gray-500 hover:text-gray-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
                     </button>
                 </div>
                 <div id="progressContainer" class="mb-4 flex space-x-1"></div>
                 <h3 id="question" class="text-xl font-semibold mb-4"></h3>
                 <div id="options" class="space-y-2 text-xl"></div>
-                <p id="ind"></p>
-                <div class="mt-6 flex justify-end">
+                <p id="indicator" class="text-sm text-gray-500 mb-4"></p>
+                <div class="mt-6 flex justify-between">
+                    <button id="previousButton" class="bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded cursor-not-allowed" disabled>
+                        Previous
+                    </button>
                     <button id="nextButton" class="bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded cursor-not-allowed" disabled>
                         Next
                     </button>
@@ -353,7 +387,7 @@
             </button>
         </div>
         <!--Phone View-->
-        <div class="md:hidden relative w-[400px] mx-auto">
+        <div class="md:hidden relative w-[300px] mx-auto">
             <!-- Gallery Wrapper -->
             <div class="overflow-hidden relative">
                 <div class="flex transition-transform duration-500 ease-in-out" id="sliderFeedback">
@@ -632,7 +666,7 @@
         
     </script>
     <script>
-        // Pop-up
+        //popup
         const questions = [
             {
                 question: "How long have you had Diabetes?",
@@ -657,25 +691,32 @@
             {
                 question: "Are you under any medication?",
                 options: ["Yes", "No"]
+            },
+            {
+                question: "Please provide your details",
+                options: [],
+                isInput: true
             }
         ];
-
+    
         let currentQuestion = 0;
-        let selectedOption = null;
+        let selectedOptions = {};
+        let formData = {
+            Name: '',
+            Age: '',
+            Mobile: '',
+            Email: ''
+        };
 
-        const startButton = document.getElementById('startButton');
-        const infoButton1 = document.getElementById('infoButton1');
-        const infoButton2 = document.getElementById('infoButton2');
-        const infoButton3 = document.getElementById('infoButton3');
-        const infoButton4 = document.getElementById('infoButton4');
         const popup = document.getElementById('popup');
-        const textElem = document.getElementById('textElem');
-        const closeButton = document.getElementById('closeButton');
+        const textElem= document.getElementById('textElem');
         const questionElement = document.getElementById('question');
         const optionsElement = document.getElementById('options');
         const nextButton = document.getElementById('nextButton');
+        const previousButton = document.getElementById('previousButton');
         const progressContainer = document.getElementById('progressContainer');
-
+        const indicator = document.getElementById('indicator');
+    
         function createProgressBar() {
             progressContainer.innerHTML = '';
             for (let i = 0; i < questions.length; i++) {
@@ -684,99 +725,175 @@
                 progressContainer.appendChild(bar);
             }
         }
-
+    
         function updateProgressBar() {
             const progressBars = progressContainer.querySelectorAll('div');
             progressBars.forEach((bar, index) => {
                 if (index <= currentQuestion) {
                     bar.classList.remove('bg-gray-300');
-                    bar.classList.add('bg-blue-600');
+                    bar.classList.add('bg-checked');
                 } else {
-                    bar.classList.remove('bg-blue-600');
+                    bar.classList.remove('bg-checked');
                     bar.classList.add('bg-gray-300');
                 }
             });
         }
-
+    
+        function updateIndicator() {
+            if (currentQuestion === questions.length - 1) {
+                indicator.textContent = "You're almost there!";
+            } else {
+                const remainingQuestions = questions.length - currentQuestion - 1;
+                indicator.textContent = `${remainingQuestions} question${remainingQuestions !== 1 ? 's' : ''} remaining`;
+            }
+        }
+    
         function showQuestion() {
             const q = questions[currentQuestion];
             questionElement.textContent = q.question;
             optionsElement.innerHTML = '';
-            selectedOption = null;
             nextButton.disabled = true;
-            nextButton.classList.remove('bg-blue-500', 'hover:bg-blue-700', 'text-white');
+            nextButton.classList.remove('bg-checked', 'hover:bg-[#007b36]', 'text-white');
             nextButton.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
 
-            q.options.forEach((option, index) => {
-                const label = document.createElement('label');
-                label.className = 'flex items-center space-x-2 p-2 rounded bg-gray-100 hover:bg-gray-200 cursor-pointer';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.name = 'option';
-                checkbox.value = option;
-                checkbox.className = 'form-checkbox h-5 w-5 text-blue-600';
-                
-                const span = document.createElement('span');
-                span.textContent = option;
-                
-                label.appendChild(checkbox);
-                label.appendChild(span);
-                
-                checkbox.onchange = (e) => {
-                    const checkboxes = document.querySelectorAll('input[name="option"]');
-                    checkboxes.forEach(cb => {
-                        if (cb !== e.target) cb.checked = false;
-                    });
-                    selectedOption = e.target.checked ? e.target.value : null;
-                    nextButton.disabled = !selectedOption;
-                    if (selectedOption) {
-                        nextButton.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                        nextButton.classList.add('bg-blue-500', 'hover:bg-blue-700', 'text-white');
-                    } else {
-                        nextButton.classList.remove('bg-blue-500', 'hover:bg-blue-700', 'text-white');
-                        nextButton.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
-                    }
-                };
-                
-                optionsElement.appendChild(label);
-            });
+            previousButton.disabled = currentQuestion === 0;
+            if (previousButton.disabled) {
+                previousButton.classList.remove('bg-checked', 'hover:bg-[#007b36]', 'text-white');
+                previousButton.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+            } else {
+                previousButton.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                previousButton.classList.add('bg-checked', 'hover:bg-[#007b36]', 'text-white');
+            }
 
-            nextButton.textContent = currentQuestion === questions.length - 1 ? "Finish" : "Next";
+            if (q.isInput) {
+                const fields = ['Name', 'Age', 'Mobile', 'Email'];
+                fields.forEach(field => {
+                    const label = document.createElement('label');
+                    label.textContent = field;
+                    label.className = 'block text-gray-700 text-sm font-bold mb-2';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = formData[field] || '';
+                    input.className = 'form-input mt-1 block w-full border border-gray-300 rounded py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-checked';
+                    input.placeholder = `Enter your ${field.toLowerCase()}`;
+                    
+                    input.oninput = () => {
+                        formData[field] = input.value;
+                        checkIfAllFieldsFilled(); // Check if all fields have data
+                    };
+                    
+                    optionsElement.appendChild(label);
+                    optionsElement.appendChild(input);
+                });
+            } else {
+                q.options.forEach((option, index) => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center space-x-2 p-2 rounded bg-gray-100 hover:bg-gray-200 cursor-pointer';
+                    
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = 'option';
+                    radio.value = option;
+                    radio.className = 'form-radio h-5 w-5 text-checked';
+                    radio.checked = selectedOptions[currentQuestion] === option;
+    
+                    radio.addEventListener('change', () => {
+                        selectedOptions[currentQuestion] = option;
+                        highlightSelectedOption(label);
+                        nextButton.disabled = false;
+                        nextButton.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                        nextButton.classList.add('bg-checked', 'hover:bg-[#007b36]', 'text-white');
+                    });
+    
+                    const span = document.createElement('span');
+                    span.textContent = option;
+    
+                    label.appendChild(radio);
+                    label.appendChild(span);
+                    optionsElement.appendChild(label);
+                    
+                    if (radio.checked) {
+                        highlightSelectedOption(label);
+                    }
+                });
+            }
+    
             updateProgressBar();
+            updateIndicator();
         }
 
-        function showPopup() {
+        function highlightSelectedOption(label) {
+            const optionLabels = optionsElement.querySelectorAll('label');
+            optionLabels.forEach(l => l.classList.remove('bg-selected'));
+            label.classList.add('bg-selected');
+        }
+    
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                submitForm();
+            }
+        }
+    
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+
+        function checkIfAllFieldsFilled() {
+            const allFieldsFilled = Object.values(formData).every(value => value.trim() !== '');
+            nextButton.disabled = !allFieldsFilled;
+
+            if (allFieldsFilled) {
+                nextButton.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                nextButton.classList.add('bg-checked', 'hover:bg-[#007b36]', 'text-white');
+            } else {
+                nextButton.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+                nextButton.classList.remove('bg-checked', 'hover:bg-[#007b36]', 'text-white');
+            }
+        }
+    
+        function submitForm() {
+            console.log('Selected Options:', selectedOptions);
+            console.log('Form Data:', formData);
+            alert('Form submitted! Check the console for the data.');
+            closePopup();
+        }
+
+        function openPopup() {
             popup.classList.remove('hidden');
             textElem.classList.add('hidden');
-            createProgressBar();
+            currentQuestion = 0;
+            selectedOptions = {};
+            formData = {
+                Name: '',
+                Age: '',
+                Mobile: '',
+                Email: ''
+            };
             showQuestion();
-        };
-
-        document.querySelectorAll('.trigger-popup').forEach(button => {
-            button.addEventListener('click', showPopup);
-        });
-
-        closeButton.onclick = () => {
+        }
+    
+        function closePopup() {
             popup.classList.add('hidden');
             textElem.classList.remove('hidden');
-            currentQuestion = 0;
-            updateProgressBar();
-        };
+        }
+    
+        document.getElementById('closeButton').addEventListener('click', closePopup);
+        nextButton.addEventListener('click', nextQuestion);
+        previousButton.addEventListener('click', previousQuestion);
 
-        nextButton.onclick = () => {
-            if (selectedOption) {
-                currentQuestion++;
-                if (currentQuestion < questions.length) {
-                    showQuestion();
-                } else {
-                    popup.classList.add('hidden');
-                    textElem.classList.remove('hidden');
-                    currentQuestion = 0;
-                    updateProgressBar();
-                }
-            }
-        };
+        // Initialize
+        createProgressBar();
+        //openPopup(); // Automatically open the popup for demonstration
+        document.querySelectorAll('.trigger-popup').forEach(button => {
+            button.addEventListener('click', openPopup);
+        });
     </script>
     <script>
          // FAQ slider
